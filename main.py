@@ -1,4 +1,4 @@
-import os
+from os import listdir, path
 
 import numpy as np
 
@@ -8,16 +8,11 @@ from skimage import feature
 from skimage import color
 from skimage import img_as_uint
 
+BASE_PATH = path.dirname(path.abspath("__file__"))
 
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+easy_filenames = [path.join("images/easy", f) for f in listdir("images/easy") if path.isfile(path.join("images/easy", f))]
+# med_easy_filenames = [path.join("images/medium_easy", f) for f in listdir("images/medium_easy") if path.isfile(path.join("images/medium_easy", f))]
+# med_hard_filenames = [path.join("images/medium_hard", f) for f in listdir("images/medium_hard") if path.isfile(path.join("images/medium_hard", f))]
+# hard_filenames = [path.join("images/hard", f) for f in listdir("images/hard") if path.isfile(path.join("images/hard", f))]
 
-
-def process(path):
-    img = io.imread(path, as_gray=True)
-    processed_img = feature.canny(img, sigma=0.8)
-    io.imsave(os.path.join(BASE_PATH, "processed_images", "processed.jpg"), processed_img)
-    return processed_img
-
-
-for filename in os.listdir("images"):
-    process(os.path.join(BASE_PATH, "images", filename))
+easy_imgs = [io.imread(f) for f in easy_filenames]
