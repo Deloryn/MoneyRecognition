@@ -8,7 +8,7 @@ from skimage import feature
 from skimage import color
 from skimage import img_as_uint
 
-BASE_PATH = path.dirname(path.abspath("__file__"))
+BASE_PATH = path.dirname(path.abspath(__file__))
 
 easy_filenames = [path.join("images/easy", f) for f in listdir("images/easy") if path.isfile(path.join("images/easy", f))]
 # med_easy_filenames = [path.join("images/medium_easy", f) for f in listdir("images/medium_easy") if path.isfile(path.join("images/medium_easy", f))]
