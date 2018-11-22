@@ -8,11 +8,14 @@ from skimage import feature
 from skimage import color
 from skimage import img_as_uint
 
-BASE_PATH = path.dirname(path.abspath(__file__))
+BASE_DIR_PATH = path.dirname(path.abspath(__file__))
+IMAGES_PATH = path.join(BASE_DIR_PATH, "images")
+EASY_PATH = path.join(IMAGES_PATH, "easy")
+MEDIUM_PATH = path.join(IMAGES_PATH, "medium")
+HARD_PATH = path.join(IMAGES_PATH, "hard")
 
-easy_filenames = [path.join("images/easy", f) for f in listdir("images/easy") if path.isfile(path.join("images/easy", f))]
-# med_easy_filenames = [path.join("images/medium_easy", f) for f in listdir("images/medium_easy") if path.isfile(path.join("images/medium_easy", f))]
-# med_hard_filenames = [path.join("images/medium_hard", f) for f in listdir("images/medium_hard") if path.isfile(path.join("images/medium_hard", f))]
-# hard_filenames = [path.join("images/hard", f) for f in listdir("images/hard") if path.isfile(path.join("images/hard", f))]
+easy_filenames = [path.join(EASY_PATH, f) for f in listdir(EASY_PATH) if path.isfile(path.join(EASY_PATH, f))]
+medium_filenames = [path.join(MEDIUM_PATH, f) for f in listdir(MEDIUM_PATH) if path.isfile(path.join(MEDIUM_PATH, f))]
+hard_filenames = [path.join(HARD_PATH, f) for f in listdir(HARD_PATH) if path.isfile(path.join(HARD_PATH, f))]
 
 easy_imgs = [io.imread(f) for f in easy_filenames]
