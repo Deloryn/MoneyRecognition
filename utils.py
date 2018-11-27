@@ -105,7 +105,7 @@ def calculate_avg_color_int(img):
     red //= count
     green //= count
     blue //= count
-    return [red, green, blue]
+    return red, green, blue
 
 
 def calculate_avg_color_float(img):
@@ -123,7 +123,35 @@ def calculate_avg_color_float(img):
     red /= count
     green /= count
     blue /= count
-    return [red, green, blue]
+    return red, green, blue
+
+
+def is_pixel_silver(pixel):
+    red = pixel[0]
+    green = pixel[1]
+    blue = pixel[2]
+    if abs(red - green) <= 10 and abs(red - green) <= 15:
+    # if red == green == blue:
+        return True
+    else:
+        return False
+
+
+def calculate_silver_percentage(img):
+    img_list = img.tolist()
+    silver_count = 0
+    all_count = 0
+    for element in img_list:
+        for pixel in element:
+            all_count += 1
+            if is_pixel_silver(pixel):
+                silver_count += 1
+    print("Silver count: " + str(silver_count))
+    print("All count: " + str(all_count))
+    print(silver_count / all_count)
+    print("")
+    print("")
+    return silver_count / all_count
 
 
 def sk2cv_contours(sk_contours):

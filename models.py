@@ -2,23 +2,54 @@ from enum import Enum
 
 import numpy as np
 
-from skimage import measure, io, exposure
+from skimage import measure, io, exposure, color
 
 from utils import distance_between_points, draw_contour, biggest_contour, biggest_region, calculate_distances_from_centroid, calculate_perimeter_from_contour, calculate_avg_color_int
-from utils import calculate_avg_color_float
+from utils import calculate_avg_color_float, calculate_silver_percentage
 
 
 class DecisionTree:
     def __init__(self, items):
-        self.items = items
+        self.items = [item for item in items if item.region is not None]
         self.recognized = []
         self.unsure = []
 
     def solve(self):
+        self.prepare_items()
+        self.prepare_silver_levels()
         self.classify_items()
         self.classify_unsure_items()
         score = self.calculate_score()
         return score
+
+    def prepare_items(self):
+        for item in self.items:
+            if item.is_circle():
+                item.circle = True
+                if item.is_coin():
+                    item.coin = True
+
+    def prepare_silver_levels(self):
+        silver_levels = []
+        for item in self.items:
+            if not item.coin:
+                continue
+            silver_level = calculate_silver_percentage(item.img)
+            item.silver_level = silver_level
+            if silver_level < 1.0:
+                silver_levels.append(silver_level)
+
+        if silver_levels:
+            max_silver_level = max(silver_levels)
+            min_silver_level = min(silver_levels)
+            # middle_silver_level = (max_silver_level + min_silver_level) / 2
+            middle_silver_level = min(sum(silver_levels)/len(silver_levels), (min_silver_level+max_silver_level)/2)
+            middle_silver_level += (max_silver_level/min_silver_level/100)
+            # if max_silver_level - min_silver_level <= 0.04:
+            #     middle_silver_level -= 0.002
+            print("Middle silver level: " + str(middle_silver_level))
+            for item in self.items:
+                item.middle_silver_level = middle_silver_level
 
     def classify_items(self):
         for item in self.items:
@@ -50,6 +81,10 @@ class DecisionTree:
 class Item:
     def __init__(self, img):
         self.img = img
+        self.middle_silver_level = 0
+        self.silver_level = 0
+        self.circle = False
+        self.coin = False
         self.contour = biggest_contour(img)
         if self.contour is not None:
             self.region = biggest_region(img)
@@ -112,44 +147,41 @@ class Item:
         # TODO: implementacja. Moze byc trudne
         pass
 
+    def is_coin(self):
+        copy = np.copy(self.img)
+        red, green, blue = calculate_avg_color_float(copy)
+        if red-green <= 25 and blue-green <= 30 and red >= 50:
+            h, s, v = calculate_avg_color_float(color.rgb2hsv(copy[:, :, :3]))
+            if h <= 0.13 and s <= 0.44:
+                return True
+        return False
+
+    def is_silver_coin(self):
+        if self.silver_level >= self.middle_silver_level:
+            return True
+        else:
+            return False
+
     def classify(self):
-        # TODO: na koncu ma byc self.value = konkretna wartosc
-        # TODO: na koncu return Type.TYP
         if self.contour is None:
             self.value = 0
             return Type.REJECTED
-        if self.is_circle():
-            # self.value = 1
-            # return Type.ONE_PLN
-            self.value = 0
-            return Type.REJECTED
-        elif self.is_rectangle():
-            avg_color = calculate_avg_color_float(self.img)
-            red = avg_color[0]
-            green = avg_color[1]
-            blue = avg_color[2]
-            #[0.355756461796403, 0.3897173477711009, 0.3882332225761498]
-
-            copy = np.copy(self.img)
-            copy = exposure.equalize_adapthist(copy)
-            if (0.25 <= red <= 0.33) and abs(green-blue) <= 0.03: # banknot 20 zł
-                self.value = 20
-                return Type.TWENTY_PLN
-            elif (0.33 <= red <= 0.45) and abs(green-blue) <= 0.03: # banknot 50 zl
-                self.value = 50
-                return Type.FIFTY_PLN
+        if self.circle:
+            if self.coin:
+                if self.is_silver_coin():
+                    draw_contour(self.img, self.contour)
+                    self.value = 1
+                    return Type.ONE_PLN
             else:
-                # TODO: is multishape
                 self.value = 0
                 return Type.REJECTED
-        # elif self.is_multishape():
-        #     self.classify()
         else:
             self.value = 0
             return Type.REJECTED
 
     def compare_ratio(self, unsure_item):
-        calculated_ratio = unsure_item.size / self.size
+        # calculated_ratio = unsure_item.size / self.size
+        calculated_ratio = calculate_perimeter_from_contour(unsure_item.contour) / calculate_perimeter_from_contour(self.contour)
         if self.value == 0.20:
             ratio = {0.20: 1, 0.50: 1.108108, 1: 1.243243, 2: 1.162162, 5: 1.297297}
         elif self.value == 0.50:
@@ -163,13 +195,14 @@ class Item:
         else:
             return Type.UNSURE
 
+        distance = {}
+
+        # for key in ratio:
+            # ratio[key] = ratio[key]**2 # bo porownujemy pola obiektow
         for key in ratio:
-            ratio[key] = ratio[key]**2 # bo porownujemy pola obiektow
-        epsilon = 0.05
-        for key in ratio:
-            if ratio[key]-epsilon <= calculated_ratio <= ratio[key]+epsilon:
-                return key
-        return Type.UNSURE
+            distance[key] = abs(calculated_ratio - ratio[key])
+
+        return min(distance.items(), key=lambda x: x[1])[0]
 
 
 class Type(Enum):
