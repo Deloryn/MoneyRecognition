@@ -5,7 +5,7 @@ import numpy as np
 from skimage import measure, io, exposure, color
 
 from utils import distance_between_points, draw_contour, biggest_contour, biggest_region, calculate_distances_from_centroid, calculate_perimeter_from_contour, calculate_avg_color_int
-from utils import calculate_avg_color_float, calculate_silver_percentage
+from utils import calculate_avg_color_float, calculate_silver_percentage, calculate_color_difference
 
 
 class DecisionTree:
@@ -16,7 +16,7 @@ class DecisionTree:
 
     def solve(self):
         self.prepare_items()
-        self.prepare_silver_levels()
+        self.prepare_color_differences()
         self.classify_items()
         self.classify_unsure_items()
         score = self.calculate_score()
@@ -29,27 +29,28 @@ class DecisionTree:
                 if item.is_coin():
                     item.coin = True
 
-    def prepare_silver_levels(self):
-        silver_levels = []
+    def prepare_color_differences(self):
+        color_diffs = []
         for item in self.items:
             if not item.coin:
                 continue
-            silver_level = calculate_silver_percentage(item.img)
-            item.silver_level = silver_level
-            if silver_level < 1.0:
-                silver_levels.append(silver_level)
+            color_diff = calculate_color_difference(item.img)
+            item.color_diff = color_diff
+            if color_diff > 100:
+                color_diffs.append(color_diff)
 
-        if silver_levels:
-            max_silver_level = max(silver_levels)
-            min_silver_level = min(silver_levels)
-            # middle_silver_level = (max_silver_level + min_silver_level) / 2
-            middle_silver_level = min(sum(silver_levels)/len(silver_levels), (min_silver_level+max_silver_level)/2)
-            middle_silver_level += (max_silver_level/min_silver_level/100)
-            # if max_silver_level - min_silver_level <= 0.04:
-            #     middle_silver_level -= 0.002
-            print("Middle silver level: " + str(middle_silver_level))
-            for item in self.items:
-                item.middle_silver_level = middle_silver_level
+        if color_diffs:
+            color_diff_border = sum(color_diffs) / len(color_diffs)
+            diff_from_border = sum(([abs(color_diff_border - x) for x in color_diffs]))
+            parameter = diff_from_border / color_diff_border / len(color_diffs)
+            if parameter < 0.2:
+                # TODO: w tym miejscu mamy pewnosc, ze albo sa tylko monochromatyczne, albo, ze sa tylko 2 i 5 zlotowki
+                for item in self.items:
+                    item.color_diff_border = 0
+                    item.color_diff = 0
+            else:
+                for item in self.items:
+                    item.color_diff_border = color_diff_border
 
     def classify_items(self):
         for item in self.items:
@@ -81,8 +82,8 @@ class DecisionTree:
 class Item:
     def __init__(self, img):
         self.img = img
-        self.middle_silver_level = 0
-        self.silver_level = 0
+        self.color_diff = 0
+        self.color_diff_border = 0
         self.circle = False
         self.coin = False
         self.contour = biggest_contour(img)
@@ -156,8 +157,8 @@ class Item:
                 return True
         return False
 
-    def is_silver_coin(self):
-        if self.silver_level >= self.middle_silver_level:
+    def is_monochromatic(self):
+        if self.color_diff != 0 and self.color_diff_border != 0 and self.color_diff <= self.color_diff_border:
             return True
         else:
             return False
@@ -168,10 +169,21 @@ class Item:
             return Type.REJECTED
         if self.circle:
             if self.coin:
-                if self.is_silver_coin():
+                if self.is_monochromatic():
+                    # TODO: tutaj mamy pewnosc, ze jest to albo 20gr, albo 50gr, albo 1zl
                     draw_contour(self.img, self.contour)
                     self.value = 1
                     return Type.ONE_PLN
+                else:
+
+                    if self.color_diff_border == 0 and self.color_diff == 0:
+                        # TODO: tutaj albo wszystkie monety sa monochromatyczne, albo niemonochromatyczne
+                        self.value = 0
+                        return Type.UNSURE
+                    else:
+                        # TODO: tutaj dana moneta jest niemonochromatyczna (2 lub 5 zl)
+                        print(self.size)
+                        pass
             else:
                 self.value = 0
                 return Type.REJECTED
@@ -210,6 +222,8 @@ class Type(Enum):
     UNSURE = 0
     TWENTY_GROSS = 0.20
     FIFTY_GROSS = 0.50
+    MONOCHROMATIC_COIN = 170
+    NOT_MONOCHROMATIC_COIN = 520
     ONE_PLN = 1
     TWO_PLN = 2
     FIVE_PLN = 5

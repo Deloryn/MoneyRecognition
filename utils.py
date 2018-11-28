@@ -154,6 +154,28 @@ def calculate_silver_percentage(img):
     return silver_count / all_count
 
 
+def is_pixel_grayscale(pixel):
+    red = pixel[0]
+    green = pixel[1]
+    blue = pixel[2]
+    if abs(red - green) <= 10 and abs(red - green) <= 10:
+        # if red == green == blue:
+        return True
+    else:
+        return False
+
+
+def calculate_color_difference(img):
+    differences = []
+    for element in img.tolist():
+        for pixel in element:
+            rgb = pixel[:3]
+            maxim = max(rgb)
+            for color in rgb:
+                differences.append(maxim-color)
+    return sum(differences)
+
+
 def sk2cv_contours(sk_contours):
     cv_contours = []
     for sk_contour in sk_contours:
