@@ -372,3 +372,9 @@ def mean_color_without_black(img, color=""):
         return blue/count
     else:
         return (red+green+blue)/3/count
+
+
+def divide_items(item):
+    # TODO: Ewa
+    # return divided items
+    pass

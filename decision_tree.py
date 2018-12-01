@@ -21,6 +21,7 @@ class DecisionTree:
 
     def solve(self):
         self.prepare_items()
+        self.prepare_multishape_items()
         self.prepare_color_differences()
         self.classify_monochromicity()
         if self.all_mono_or_all_not_mono:
@@ -39,6 +40,19 @@ class DecisionTree:
                 if item.is_coin():
                     item.coin = True
                     self.coins.append(item)
+
+    def prepare_multishape_items(self):
+        for item in self.items:
+            if item.classify() == Type.MULTISHAPE:
+                self.items.remove(item)
+                new_items = divide_items(item)
+                for item in new_items:
+                    if item.is_circle():
+                        item.circle = True
+                        if item.is_coin():
+                            item.coin = True
+                            self.coins.append(item)
+                self.items += new_items
 
     def prepare_color_differences(self):
         color_diffs = []

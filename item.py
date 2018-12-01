@@ -39,7 +39,11 @@ class Item:
             return False
 
     def is_multishape(self):
-        # TODO: implementacja. Moze byc trudne
+        # TODO: Ewa
+        # if something:
+        #     return True
+        # else:
+        #     return False
         pass
 
     def is_coin(self):
@@ -76,7 +80,10 @@ class Item:
             else:
                 return Type.REJECTED
         else:
-            return Type.REJECTED
+            if self.is_multishape():
+                return Type.MULTISHAPE
+            else:
+                return Type.REJECTED
 
 
 # elif self.value == 2:

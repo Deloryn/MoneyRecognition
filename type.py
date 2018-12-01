@@ -7,6 +7,7 @@ class Type(Enum):
     ALL_MONO_OR_ALL_NOT_MONO = 1000
     REJECTED = -1
     UNSURE = 0
+    MULTISHAPE = -28
     TWENTY_GROSS = 0.20
     FIFTY_GROSS = 0.50
     ONE_PLN = 1
