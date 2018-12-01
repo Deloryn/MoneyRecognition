@@ -66,19 +66,6 @@ def get_contour_mask(original):
     return res
 
 
-#### przykład działania, można wywalić: ####
-
-BASE_PATH = path.dirname(path.abspath("__file__"))
-
-easy_filenames = [path.join("images/easy", f) for f in listdir("images/easy") if path.isfile(path.join("images/easy", f))]
-medium_filenames = [path.join("images/medium", f) for f in listdir("images/medium") if path.isfile(path.join("images/medium", f))]
-hard_filenames = [path.join("images/hard", f) for f in listdir("images/hard") if path.isfile(path.join("images/hard", f))]
-
-easy_imgs = [io.imread(f) for f in easy_filenames]
-medium_imgs = [io.imread(f) for f in medium_filenames]
-hard_imgs = [io.imread(f) for f in hard_filenames]
-
-
 def merge_images_vertically(imgs):
     images = [Image.fromarray(img) for img in imgs]
 
@@ -96,10 +83,3 @@ def merge_images_vertically(imgs):
         y_offset += im.size[1]
 
     return new_im
-
-x = [get_contour_mask(img) for img in easy_imgs[:8]]
-merged = merge_images_vertically(x)
-merged.save("easy_imgs_done1.jpg")
-
-merged = merge_images_vertically(easy_imgs[:8])
-merged.save("easy_imgs1.jpg")

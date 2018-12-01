@@ -37,6 +37,8 @@ class DecisionTree:
         for item in self.items:
             if item.is_circle():
                 item.circle = True
+                item.img = remove_border_from_circle(item.img, item.contour,
+                                                     item.region.centroid)
                 if item.is_coin():
                     item.coin = True
                     self.coins.append(item)
@@ -134,7 +136,7 @@ class DecisionTree:
             std = np.std(np.array(sizes))
             max_size = max(sizes)
             # if std < (max_size - min(sizes)):
-            if np.mean(np.array(sizes))*0.05 <= max(sizes)-max(sizes) <= np.mean(np.array(sizes))*0.06:
+            if np.mean(np.array(sizes))*0.05 <= max_size-min(sizes) <= np.mean(np.array(sizes))*0.06:
                 # TODO: tutaj wszystkie monety sa takie same. Byc moze trzeba zmienic troche liczbe
                 decisions = [decide_if_two_or_five(item) for item in self.not_mono]
                 number_of_two_pln = len([i for i in decisions if i == 2])

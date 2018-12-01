@@ -10,16 +10,16 @@ MEDIUM_PATH = path.join(IMAGES_PATH, "medium")
 HARD_PATH = path.join(IMAGES_PATH, "hard")
 
 # Glowny program -------------------------------------------------
-easy_filenames = [path.join(EASY_PATH, f) for f in listdir(EASY_PATH) if path.isfile(path.join(EASY_PATH, f))]
+# easy_filenames = [path.join(EASY_PATH, f) for f in listdir(EASY_PATH) if path.isfile(path.join(EASY_PATH, f))]
 # medium_filenames = [path.join(MEDIUM_PATH, f) for f in listdir(MEDIUM_PATH) if path.isfile(path.join(MEDIUM_PATH, f))]
-# hard_filenames = [path.join(HARD_PATH, f) for f in listdir(HARD_PATH) if path.isfile(path.join(HARD_PATH, f))]
+hard_filenames = [path.join(HARD_PATH, f) for f in listdir(HARD_PATH) if path.isfile(path.join(HARD_PATH, f))]
 #
 # all_filenames = easy_filenames + medium_filenames + hard_filenames
 
 # images = [io.imread(path) for path in easy_filenames]
 # masks = [get_contour_mask(img) for img in images]
 # image_processing(images, masks)
-image_processing2(easy_filenames)
+image_processing2(hard_filenames)
 # ----------------------------------------------------------------
 
 

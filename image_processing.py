@@ -75,11 +75,11 @@ def image_processing2(img_filenames):
         score = decision_tree.solve()
 
         img_name = img_filenames[i].split("/")[-1]
-        output_path = path.join("output", img_name)
+        output_path = path.join("output", str(i) + ".png")
         if not path.exists(output_path):
             mkdir(output_path)
         for j in range(len(items)):
             items[j].save_img(output_path + "/" + str(j) + "-value-" + str(
                 items[j].value) + ".png")
 
-        print(img_name + " " + str(score))
+        print(str(i) + ".png: " + str(score))

@@ -31,11 +31,9 @@ class Item:
         distances_from_centroid = calculate_distances_from_centroid(self.contour, centroid)
         min_distance = min(distances_from_centroid)
         max_distance = max(distances_from_centroid)
-        if max_distance / min_distance < 1.20:
-            print("it is circle")
+        if max_distance / min_distance < 1.4:
             return True
         else:
-            print("it is not circle")
             return False
 
     def is_multishape(self):
@@ -49,20 +47,16 @@ class Item:
     def is_coin(self):
         copy = np.copy(self.img)
         red, green, blue = calculate_avg_color_float(copy)
-        if red-green <= 25 and blue-green <= 30 and red >= 50:
+        if abs(red-green) <= 34 and green-blue <= 30 and green > blue:
             h, s, v = calculate_avg_color_float(color.rgb2hsv(copy[:, :, :3]))
-            if h <= 0.13 and s <= 0.44:
-                print("it is coin")
+            if h <= 0.37 and s <= 0.44:
                 return True
-        print("it is not coin")
         return False
 
     def is_monochromatic(self):
         if self.color_diff != 0 and self.color_diff_border != 0 and self.color_diff <= self.color_diff_border:
-            print("it is monochromatic")
             return True
         else:
-            print("it is not monochromatic")
             return False
 
     def classify(self):
@@ -84,9 +78,3 @@ class Item:
                 return Type.MULTISHAPE
             else:
                 return Type.REJECTED
-
-
-# elif self.value == 2:
-#     ratio = {0.20: 0.860465, 0.50: 0.953488, 1: 1.069767, 2: 1, 5: 1.116279}
-# elif self.value == 5:
-#     ratio = {0.20: 0.770833, 0.50: 0.854166, 1: 0.958333, 2: 0.895833, 5: 1}

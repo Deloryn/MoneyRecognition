@@ -234,6 +234,24 @@ def get_inner_five_pln_circle(img, contour, centroid):
     return inner_img
 
 
+def remove_border_from_circle(img, contour, centroid):
+    copy = np.copy(img)
+    main_radius = np.mean(
+        np.array(calculate_distances_from_centroid(contour, centroid)))
+    radius = 0.95 * main_radius
+    circle_contour = draw.circle(centroid[0], centroid[1], radius, shape=None)
+    try:
+        draw_circle(copy, circle_contour, [0, 0, 0, 255])
+    except IndexError:
+        # circle wychodzi poza ramy obrazka?
+        return img
+
+    out = np.zeros_like(copy)
+    gray = color.rgb2gray(copy)
+    out[gray == 0] = img[gray == 0]
+    return out
+
+
 def flatten_img_array(img):
     pixels = []
     for element in img.tolist():
