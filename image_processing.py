@@ -15,7 +15,7 @@ from utils import skimage_split_to_items_from_path, skimage_split_to_items_from_
 from decision_tree import DecisionTree
 from item import Item
 
-from scriptus_maximus import get_contour_mask
+from contour_mask import get_contour_mask
 
 
 import cv2

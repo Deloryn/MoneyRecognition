@@ -1,6 +1,6 @@
 from os import listdir, path
 from image_processing import mock_image_processing, image_processing, image_processing2
-from scriptus_maximus import get_contour_mask
+from contour_mask import get_contour_mask
 from skimage import io
 
 BASE_DIR_PATH = path.dirname(path.abspath(__file__))
