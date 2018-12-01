@@ -32,8 +32,10 @@ class Item:
         min_distance = min(distances_from_centroid)
         max_distance = max(distances_from_centroid)
         if max_distance / min_distance < 1.20:
+            print("it is circle")
             return True
         else:
+            print("it is not circle")
             return False
 
     def is_multishape(self):
@@ -46,13 +48,17 @@ class Item:
         if red-green <= 25 and blue-green <= 30 and red >= 50:
             h, s, v = calculate_avg_color_float(color.rgb2hsv(copy[:, :, :3]))
             if h <= 0.13 and s <= 0.44:
+                print("it is coin")
                 return True
+        print("it is not coin")
         return False
 
     def is_monochromatic(self):
         if self.color_diff != 0 and self.color_diff_border != 0 and self.color_diff <= self.color_diff_border:
+            print("it is monochromatic")
             return True
         else:
+            print("it is not monochromatic")
             return False
 
     def classify(self):

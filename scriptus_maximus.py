@@ -9,6 +9,7 @@ import sys
 import os
 from os import listdir, path
 
+
 def binary_sobel(original, treshhold):
     res = np.zeros_like(original)
     
@@ -18,6 +19,7 @@ def binary_sobel(original, treshhold):
     grayscale_contour[(grayscale_contour < treshhold)] = 0
     
     return grayscale_contour
+
 
 def get_contour_mask(original):
     is_table = original[:50].mean() < 56
@@ -41,7 +43,6 @@ def get_contour_mask(original):
             binary_sobel_treshhold = 0.011
         else:
             binary_sobel_treshhold = 0.024
-
     
     img = filters.median(img, mp.disk(median_filter_range))
     img = binary_sobel(img, binary_sobel_treshhold)

@@ -21,11 +21,11 @@ def poly_area(coords_set):
 
 
 def biggest_contour(img):
-    try:
-        contours = measure.find_contours(img_to_black_white(img), 0.8)
-    except ValueError:
-        print("ValueError in biggest_contour. Probably the item is too little")
-        return None
+    # try:
+    contours = measure.find_contours(img_to_black_white(img), 0.8)
+    # except ValueError:
+    #     print("ValueError in biggest_contour. Probably the item is too little")
+    # return None
 
     biggest_contour = None
     biggest_area = 0
@@ -126,7 +126,7 @@ def img_to_black_white(img):
     return color.rgb2gray(tmp)
 
 
-def skimage_split_to_items(img_path, green_img_path, output_path):
+def skimage_split_to_items_from_path(img_path, green_img_path, output_path):
     clear_directory(output_path)
     base_img = io.imread(img_path)
     green_img = io.imread(green_img_path)
@@ -141,6 +141,45 @@ def skimage_split_to_items(img_path, green_img_path, output_path):
         y = [y for x, y in contours[i]]
         out = cut_img(out, int(min(x)), int(max(x))+2, int(min(y)), int(max(y))+2)
         io.imsave(path.join(output_path, "item"+str(i)+".png"), out)
+
+
+def skimage_split_to_items_from_arrays(image, mask, output_path):
+    clear_directory(output_path)
+    base_img = image
+    green_img = mask
+
+    contours = measure.find_contours(color.rgb2gray(green_img), 0.8)
+    for i in range(len(contours)):
+        mask = np.zeros_like(base_img)
+        mask = draw_shape(color.rgb2gray(mask), contours[i])
+        out = np.zeros_like(base_img)
+        out[mask == 255] = base_img[mask == 255]
+        out[color.rgb2gray(out) == 0] = [0, 0, 0]
+        out = add_alpha(out)
+        x = [x for x, y in contours[i]]
+        y = [y for x, y in contours[i]]
+        out = cut_img(out, int(min(x)), int(max(x))+2, int(min(y)), int(max(y))+2)
+        io.imsave(path.join(output_path, "item"+str(i)+".png"), out)
+
+
+def add_alpha(rgb):
+    """Add an alpha layer to the image.
+
+    The alpha layer is set to 1 for foreground
+    and 0 for background.
+    """
+    rgba = []
+    for element in rgb.tolist():
+        new_element = []
+        for pixel in element:
+            new_pixel = pixel
+            if new_pixel == [0, 0, 0]:
+                new_pixel.append(0)
+            else:
+                new_pixel.append(255)
+            new_element.append(new_pixel)
+        rgba.append(new_element)
+    return np.array(rgba)
 
 
 def decide_if_two_or_five(item):
