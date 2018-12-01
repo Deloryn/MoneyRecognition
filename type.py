@@ -1,0 +1,16 @@
+from enum import Enum
+
+
+class Type(Enum):
+    MONOCHROMATIC_COIN = 170
+    NOT_MONOCHROMATIC_COIN = 520
+    ALL_MONO_OR_ALL_NOT_MONO = 1000
+    REJECTED = -1
+    UNSURE = 0
+    TWENTY_GROSS = 0.20
+    FIFTY_GROSS = 0.50
+    ONE_PLN = 1
+    TWO_PLN = 2
+    FIVE_PLN = 5
+    TWENTY_PLN = 20
+    FIFTY_PLN = 50
