@@ -1,13 +1,8 @@
-from os import path, remove, listdir
-
-from random import choice
-from string import ascii_uppercase, digits
-
 import numpy as np
 
-from skimage import draw, io, measure, color
-from skimage.filters import threshold_local
-from skimage import filters
+from skimage import draw, measure, color
+
+from type import Type
 
 
 def distance_between_points(x1, y1, x2, y2):
@@ -20,25 +15,48 @@ def poly_area(coords_set):
     return 0.5*np.abs(np.dot(x, np.roll(y, 1))-np.dot(y, np.roll(x, 1)))
 
 
-def biggest_contour(img):
-    # try:
-    contours = measure.find_contours(img_to_black_white(img), 0.8)
-    # except ValueError:
-    #     print("ValueError in biggest_contour. Probably the item is too little")
-    # return None
+def is_coin(img):
+    red, green, blue = calculate_avg_color(img)
+    if abs(red-green) <= 34 and green-blue <= 30 and green > blue:
+        h, s, v = calculate_avg_color(color.rgb2hsv(img[:, :, :3]))
+        if h <= 0.37 and s <= 0.44:
+            print("")
+            print("coin")
+            return True
+    print("")
+    print("not coin")
+    return False
 
-    biggest_contour = None
+
+def check_monochromaticity(color_amplitude, mean_color_amplitude):
+    if color_amplitude != 0 and mean_color_amplitude != 0 and color_amplitude <= mean_color_amplitude:
+        return Type.MONOCHROMATIC_COIN
+    else:
+        if color_amplitude == 0 and mean_color_amplitude == 0:
+            return Type.ALL_MONO_OR_ALL_NOT_MONO
+        else:
+            return Type.NOT_MONOCHROMATIC_COIN
+
+
+def biggest_coords(img):
+    mask = color.rgb2gray(img)
+    mask[mask != 0] = 255
+    all_coords = measure.find_contours(mask, 0.8)
+    biggest_coords = None
     biggest_area = 0
-    for contour in contours:
-        area = poly_area(contour)
+    for coords in all_coords:
+        area = poly_area(coords)
         if area > biggest_area:
             biggest_area = area
-            biggest_contour = contour
-    return biggest_contour
+            biggest_coords = coords
+    return biggest_coords
 
 
 def biggest_region(img):
-    regions = measure.regionprops(measure.label(img))
+    mask = color.rgb2gray(img)
+    mask[mask != 0] = 255
+    mask[mask != 255] = 0
+    regions = measure.regionprops(measure.label(mask))
     biggest_region = None
     biggest_area = 0
     for region in regions:
@@ -49,26 +67,12 @@ def biggest_region(img):
     return biggest_region
 
 
-def calculate_distances_from_centroid(contour, centroid):
+def calculate_distances_from_centroid(coords, centroid):
     distances_from_centroid = []
-    for x, y in contour:
+    for x, y in coords:
         distance = distance_between_points(x, y, centroid[0], centroid[1])
         distances_from_centroid.append(distance)
     return distances_from_centroid
-
-
-def calculate_perimeter_from_contour(contour):
-    perimeter = 0
-    vertices = contour.tolist()
-    for i in range(len(vertices)-1):
-        x1 = vertices[i][0]
-        y1 = vertices[i][1]
-
-        x2 = vertices[i+1][0]
-        y2 = vertices[i+1][1]
-
-        perimeter += distance_between_points(x1, y1, x2, y2)
-    return perimeter
 
 
 def get_closest_key_from_ratio(ratio, item_ratio):
@@ -80,86 +84,8 @@ def get_closest_key_from_ratio(ratio, item_ratio):
     return keys[[i for i in range(len(diffs)) if diffs[i] == min(diffs)][0]]
 
 
-def sk2cv_contours(sk_contours):
-    cv_contours = []
-    for sk_contour in sk_contours:
-        sk_contour = sk_contour.tolist()
-        cv_contour = []
-        for sk_element in sk_contour:
-            cv_element = []
-            temp_element = []
-            temp_element.append(int(round(sk_element[0])))
-            temp_element.append(int(round(sk_element[1])))
-            cv_element.append(temp_element)
-            cv_contour.append(cv_element)
-        cv_contours.append(np.asarray(cv_contour, dtype="float"))
-    return cv_contours
-
-
-def clear_directory(path_to_dir):
-    for filename in listdir(path_to_dir):
-        remove(path.join(path_to_dir, filename))
-
-
-def generate_random_name(size=6, chars=ascii_uppercase + digits):
-    return ''.join(choice(chars) for _ in range(size))
-
-
 def cut_img(img, min_x, max_x, min_y, max_y):
     return img[min_x:max_x, min_y:max_y]
-
-
-def threshold_img(img, blocksize=111):
-    copy = np.copy(img)
-    copy = filters.gaussian(copy)
-    gray = color.rgb2gray(copy)
-    thresh = threshold_local(gray, blocksize)
-    binary = gray > thresh
-    copy[binary != 1] = [0, 0, 0, 255]
-    copy = filters.sobel(color.rgb2gray(copy))
-    return copy
-
-
-def img_to_black_white(img):
-    tmp = np.zeros_like(color.rgba2rgb(img))
-    tmp[img[:, :, 3] != 0] = 1
-    return color.rgb2gray(tmp)
-
-
-def skimage_split_to_items_from_path(img_path, green_img_path, output_path):
-    clear_directory(output_path)
-    base_img = io.imread(img_path)
-    green_img = io.imread(green_img_path)
-
-    contours = measure.find_contours(color.rgb2gray(green_img), 0.8)
-    for i in range(len(contours)):
-        mask = np.zeros_like(base_img)
-        mask = draw_shape(color.rgb2gray(mask), contours[i])
-        out = np.zeros_like(base_img)
-        out[mask == 255] = base_img[mask == 255]
-        x = [x for x, y in contours[i]]
-        y = [y for x, y in contours[i]]
-        out = cut_img(out, int(min(x)), int(max(x))+2, int(min(y)), int(max(y))+2)
-        io.imsave(path.join(output_path, "item"+str(i)+".png"), out)
-
-
-def skimage_split_to_items_from_arrays(image, mask, output_path):
-    clear_directory(output_path)
-    base_img = image
-    green_img = mask
-
-    contours = measure.find_contours(color.rgb2gray(green_img), 0.8)
-    for i in range(len(contours)):
-        mask = np.zeros_like(base_img)
-        mask = draw_shape(color.rgb2gray(mask), contours[i])
-        out = np.zeros_like(base_img)
-        out[mask == 255] = base_img[mask == 255]
-        out[color.rgb2gray(out) == 0] = [0, 0, 0]
-        out = add_alpha(out)
-        x = [x for x, y in contours[i]]
-        y = [y for x, y in contours[i]]
-        out = cut_img(out, int(min(x)), int(max(x))+2, int(min(y)), int(max(y))+2)
-        io.imsave(path.join(output_path, "item"+str(i)+".png"), out)
 
 
 def add_alpha(rgb):
@@ -183,14 +109,8 @@ def add_alpha(rgb):
 
 
 def decide_if_two_or_five(item):
-    outer_part = get_outer_five_pln_circle(item.img, item.contour, item.region.centroid)
-    inner_part = get_inner_five_pln_circle(item.img, item.contour, item.region.centroid)
-
+    outer_part = get_outer_five_pln_circle(item)
     outer_goldness = calculate_goldness(outer_part)
-    inner_goldness = calculate_goldness(inner_part)
-
-    outer_silverness = calculate_silverness(outer_part)
-    inner_silverness = calculate_silverness(inner_part)
 
     if outer_goldness > 0.5:
         return 2
@@ -198,16 +118,16 @@ def decide_if_two_or_five(item):
         return 5
 
 
-def draw_contour(img, contour):
-    r = [coords[0] for coords in contour]
-    c = [coords[1] for coords in contour]
+def draw_contour(img, coords):
+    r = [coord[0] for coord in coords]
+    c = [coord[1] for coord in coords]
     rr, cc = draw.polygon_perimeter(r, c)
     img[rr, cc] = [0, 255, 0, 255]
 
 
-def draw_shape(img, contour):
-    r = [coords[0] for coords in contour]
-    c = [coords[1] for coords in contour]
+def draw_shape(img, coords):
+    r = [coord[0] for coord in coords]
+    c = [coord[1] for coord in coords]
     rr, cc = draw.polygon(r, c)
     img[rr, cc] = 255
     return img
@@ -218,110 +138,41 @@ def draw_circle(img, circle, color=[0, 255, 0, 255]):
     img[rr, cc] = color
 
 
-def get_outer_five_pln_circle(img, contour, centroid):
-    copy = np.copy(img)
-    main_radius = np.mean(np.array(calculate_distances_from_centroid(contour, centroid)))
+# def get_outer_five_pln_circle(img, contour, centroid):
+def get_outer_five_pln_circle(item):
+    copy = np.copy(item.img)
+    centroid = item.region.centroid
+    main_radius = item.contour.mean_distance
     radius = 0.7 * main_radius
     circle_contour = draw.circle(centroid[0], centroid[1], radius, shape=None)
     draw_circle(copy, circle_contour, [0, 0, 0, 255])
     return copy
 
 
-def get_inner_five_pln_circle(img, contour, centroid):
-    outer_img = get_outer_five_pln_circle(img, contour, centroid)
-    inner_img = np.zeros_like(outer_img)
-    inner_img[color.rgb2gray(outer_img) == 0] = img[color.rgb2gray(outer_img) == 0]
-    return inner_img
-
-
-def remove_border_from_circle(img, contour, centroid):
-    copy = np.copy(img)
-    main_radius = np.mean(
-        np.array(calculate_distances_from_centroid(contour, centroid)))
+# def remove_border_from_circle(img, contour, centroid):
+def remove_border_from_circle(item):
+    copy = np.copy(item.img)
+    centroid = item.region.centroid
+    main_radius = item.contour.mean_distance
     radius = 0.95 * main_radius
     circle_contour = draw.circle(centroid[0], centroid[1], radius, shape=None)
     try:
         draw_circle(copy, circle_contour, [0, 0, 0, 255])
     except IndexError:
         # circle wychodzi poza ramy obrazka?
-        return img
+        return item.img
 
     out = np.zeros_like(copy)
     gray = color.rgb2gray(copy)
-    out[gray == 0] = img[gray == 0]
+    out[gray == 0] = item.img[gray == 0]
     return out
 
 
-def flatten_img_array(img):
-    pixels = []
-    for element in img.tolist():
-        for pixel in element:
-            if pixel[0] != 0 and pixel[1] != 0 and pixel[2] != 0:
-                pixels.append(pixel[:3])
-    return pixels
-
-
-def calculate_avg_color_int(img):
-    red = 0
-    green = 0
-    blue = 0
-    count = 0
-    img_list = img.tolist()
-    for element in img_list:
-        for pixel in element:
-            count += 1
-            red += pixel[0]
-            green += pixel[1]
-            blue += pixel[2]
-    red //= count
-    green //= count
-    blue //= count
+def calculate_avg_color(img):
+    red = np.mean(img[:, :, 0])
+    green = np.mean(img[:, :, 1])
+    blue = np.mean(img[:, :, 2])
     return red, green, blue
-
-
-def calculate_avg_color_float(img):
-    red = 0
-    green = 0
-    blue = 0
-    count = 0
-    img_list = img.tolist()
-    for element in img_list:
-        for pixel in element:
-            count += 1
-            red += pixel[0]
-            green += pixel[1]
-            blue += pixel[2]
-    red /= count
-    green /= count
-    blue /= count
-    return red, green, blue
-
-
-def is_pixel_silver(pixel):
-    red = pixel[0]
-    green = pixel[1]
-    blue = pixel[2]
-    if abs(red - green) <= 10 and abs(red - green) <= 15:
-        return True
-    else:
-        return False
-
-
-def calculate_silver_percentage(img):
-    img_list = img.tolist()
-    silver_count = 0
-    all_count = 0
-    for element in img_list:
-        for pixel in element:
-            all_count += 1
-            if is_pixel_silver(pixel):
-                silver_count += 1
-    print("Silver count: " + str(silver_count))
-    print("All count: " + str(all_count))
-    print(silver_count / all_count)
-    print("")
-    print("")
-    return silver_count / all_count
 
 
 def calculate_goldness(img):
@@ -336,29 +187,6 @@ def calculate_goldness(img):
     return gold_pixels/all_pixels
 
 
-def calculate_silverness(img):
-    silver_pixels = 0
-    all_pixels = 0
-    for element in img.tolist():
-        for pixel in element:
-            if pixel[0] != 0 and pixel[1] != 0 and pixel[2] != 0:
-                all_pixels += 1
-                if abs(pixel[0] - pixel[1]) + abs(pixel[1] - pixel[2]) < 10:
-                    silver_pixels += 1
-    return silver_pixels / all_pixels
-
-
-def is_pixel_grayscale(pixel):
-    red = pixel[0]
-    green = pixel[1]
-    blue = pixel[2]
-    if abs(red - green) <= 10 and abs(red - green) <= 10:
-        # if red == green == blue:
-        return True
-    else:
-        return False
-
-
 def calculate_color_difference(img):
     differences = []
     for element in img.tolist():
@@ -370,29 +198,14 @@ def calculate_color_difference(img):
     return sum(differences)
 
 
-def mean_color_without_black(img, color=""):
-    red = 0
-    green = 0
-    blue = 0
-    count = 0
-    for element in img.tolist():
-        for pixel in element:
-            if pixel[0] != 0 and pixel[1] != 0 and pixel[2] != 0:
-                count += 1
-                red += pixel[0]
-                green += pixel[1]
-                blue += pixel[2]
-    if color == "r":
-        return red/count
-    elif color == "g":
-        return green/count
-    elif color == "b":
-        return blue/count
-    else:
-        return (red+green+blue)/3/count
-
-
-def divide_items(item):
+def is_multishape(img):
     # TODO: Ewa
-    # return divided items
-    pass
+    # if something then True
+    # else False
+    return False
+
+
+def divide_multishape(img):
+    # TODO: Ewa
+    # return new_images, new_contours
+    return [], []

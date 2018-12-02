@@ -1,18 +1,12 @@
-import skimage as ski
 import skimage.morphology as mp
-from skimage import io, filters
+from skimage import filters
 from skimage.color import rgb2gray
 from scipy.ndimage import binary_fill_holes
 import numpy as np
 from PIL import Image
-import sys
-import os
-from os import listdir, path
 
 
 def binary_sobel(original, treshhold):
-    res = np.zeros_like(original)
-    
     grayscale_contour = filters.sobel(rgb2gray(original))
     
     grayscale_contour[(grayscale_contour > treshhold)] = 1
