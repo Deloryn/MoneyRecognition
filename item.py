@@ -1,92 +1,18 @@
-from utils import *
-
-from type import Type
+from os import path
+from skimage import io
 
 
 class Item:
-    def __init__(self, img):
+    def __init__(self, img, contour, region, is_circle, is_coin, monochromaticity):
         self.img = img
-        self.color_diff = 0
-        self.color_diff_border = 0
-        self.circle = False
-        self.coin = False
-        self.contour = biggest_contour(img)
-        if self.contour is not None:
-            self.region = biggest_region(img)
-            self.size = self.region.area
-            if self.size <= 20:
-                self.contour = None
-                self.region = None
-                self.size = 0
-        else:
-            self.region = None
-            self.size = 0
+        self.contour = contour
+        self.region = region
+        self.is_circle = is_circle
+        self.is_coin = is_coin
+        self.monochromaticity = monochromaticity
         self.value = 0
 
-    def save_img(self, path):
-        io.imsave(path, self.img)
-
-    def is_circle(self):
-        centroid = self.region.centroid
-        distances_from_centroid = calculate_distances_from_centroid(self.contour, centroid)
-        min_distance = min(distances_from_centroid)
-        max_distance = max(distances_from_centroid)
-        if max_distance / min_distance < 1.20:
-            print("it is circle")
-            return True
-        else:
-            print("it is not circle")
-            return False
-
-    def is_multishape(self):
-        # TODO: Ewa
-        # if something:
-        #     return True
-        # else:
-        #     return False
-        pass
-
-    def is_coin(self):
-        copy = np.copy(self.img)
-        red, green, blue = calculate_avg_color_float(copy)
-        if red-green <= 25 and blue-green <= 30 and red >= 50:
-            h, s, v = calculate_avg_color_float(color.rgb2hsv(copy[:, :, :3]))
-            if h <= 0.13 and s <= 0.44:
-                print("it is coin")
-                return True
-        print("it is not coin")
-        return False
-
-    def is_monochromatic(self):
-        if self.color_diff != 0 and self.color_diff_border != 0 and self.color_diff <= self.color_diff_border:
-            print("it is monochromatic")
-            return True
-        else:
-            print("it is not monochromatic")
-            return False
-
-    def classify(self):
-        if self.contour is None:
-            return Type.REJECTED
-        if self.circle:
-            if self.coin:
-                if self.is_monochromatic():
-                    return Type.MONOCHROMATIC_COIN
-                else:
-                    if self.color_diff_border == 0 and self.color_diff == 0:
-                        return Type.ALL_MONO_OR_ALL_NOT_MONO
-                    else:
-                        return Type.NOT_MONOCHROMATIC_COIN
-            else:
-                return Type.REJECTED
-        else:
-            if self.is_multishape():
-                return Type.MULTISHAPE
-            else:
-                return Type.REJECTED
-
-
-# elif self.value == 2:
-#     ratio = {0.20: 0.860465, 0.50: 0.953488, 1: 1.069767, 2: 1, 5: 1.116279}
-# elif self.value == 5:
-#     ratio = {0.20: 0.770833, 0.50: 0.854166, 1: 0.958333, 2: 0.895833, 5: 1}
+    def save_img(self, output_dir, filenumber):
+        filename = str(filenumber) + "-value-" + str(self.value) + ".png"
+        full_path = path.join(output_dir, filename)
+        io.imsave(full_path, self.img)

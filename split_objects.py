@@ -2,6 +2,7 @@ from scipy import ndimage as ndi
 import numpy as np
 from skimage.morphology import watershed
 
+
 def get_splitted_objects_labels(image):
     dist = ndi.distance_transform_edt(image)
     
