@@ -139,6 +139,7 @@ def draw_shape(img, coords):
 def draw_circle(img, circle, color):
     rr, cc = circle
     img[rr, cc] = color
+    return img
 
 
 def get_five_pln_outer_circle(item):
@@ -147,8 +148,33 @@ def get_five_pln_outer_circle(item):
     main_radius = item.contour.mean_distance
     radius = 0.7 * main_radius
     circle_contour = draw.circle(centroid[0], centroid[1], radius, shape=None)
-    draw_circle(outer, circle_contour, [0, 0, 0, 255])
+    outer = draw_circle(outer, circle_contour, [0, 0, 0, 255])
     return outer
+
+
+def get_coin_middle(item):
+    copy = np.copy(item.img)
+    centroid = item.region.centroid
+    main_radius = item.contour.mean_distance
+    radius = 0.69 * main_radius
+    circle_contour = draw.circle(centroid[0], centroid[1], radius, shape=None)
+    copy = draw_circle(copy, circle_contour, [0, 0, 0, 255])
+    gray_copy = color.rgb2gray(copy)
+    print(gray_copy.tolist())
+    coin_middle = np.zeros_like(item.img)
+    coin_middle[gray_copy == 0] = item.img[gray_copy == 0]
+    return coin_middle
+
+
+def calculate_mean_middle_goldness(items):
+    goldness = []
+    for item in items:
+        img = get_coin_middle(item)
+        goldness.append(calculate_goldness(img))
+    if goldness:
+        return sum(goldness) / len(goldness)
+    else:
+        return 0
 
 
 def remove_border_from_circle(item):
@@ -158,15 +184,15 @@ def remove_border_from_circle(item):
     radius = 0.95 * main_radius
     circle_contour = draw.circle(centroid[0], centroid[1], radius, shape=None)
     try:
-        draw_circle(copy, circle_contour, [0, 0, 0, 255])
+        copy = draw_circle(copy, circle_contour, [0, 0, 0, 255])
     except IndexError:
         # circle wychodzi poza ramy obrazka?
-        return item.img
+        return
 
     out = np.zeros_like(copy)
     gray = color.rgb2gray(copy)
     out[gray == 0] = item.img[gray == 0]
-    return out
+    item.img = out
 
 
 def calculate_avg_color(img):

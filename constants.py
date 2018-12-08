@@ -1,5 +1,6 @@
 import numpy as np
 
+from utils import calculate_mean_middle_goldness
 
 class Constants:
     def __init__(self, areas, mean_color_amplitude, coins_color_diffs_percentages, all_mono_or_not_mono, mono_items, not_mono_items, mono_or_not_mono_items, mean_h, mean_s, mean_v):
@@ -24,6 +25,11 @@ class Constants:
         self.mean_v = mean_v
 
         # TODO
+        print("")
+        print("mean color diffs percentage: " + str(self.MEAN_COINS_COLOR_DIFFS_PERCENTAGE))
+        print("mean v: " + str(self.mean_v))
+        # mean_middle_goldness = calculate_mean_middle_goldness(self.MONO_OR_NOT_MONO_ITEMS)
+        # print("mean middle goldness: " + str(mean_middle_goldness))
         if ((self.MEAN_COINS_COLOR_DIFFS_PERCENTAGE < 0.13) or (1.000000360856528e-17 > self.mean_v > 4.97429791576997e-18)) and self.ALL_MONO_OR_NOT_MONO:
             self.ALL_MONO = True
             self.ALL_NOT_MONO = False

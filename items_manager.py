@@ -89,7 +89,6 @@ class ItemsManager:
             coin = False
             if contour_object.is_circle():
                 circle = True
-                # img = remove_border_from_circle(img, contour, region.centroid)
                 if is_coin(img):
                     hsv = color.rgb2hsv(img[:,:,:3])
                     all_h.append(np.mean(hsv[:,:,0]))
