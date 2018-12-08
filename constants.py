@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Constants:
-    def __init__(self, areas, mean_color_amplitude, coins_color_diffs_percentages, all_mono_or_not_mono, mono_items, not_mono_items, mono_or_not_mono_items):
+    def __init__(self, areas, mean_color_amplitude, coins_color_diffs_percentages, all_mono_or_not_mono, mono_items, not_mono_items, mono_or_not_mono_items, mean_h, mean_s, mean_v):
         self.RATIO_FOR_ONE_PLN = {0.20: 0.646974096, 0.50: 0.79442282, 1: 1}
         self.RATIO_FOR_FIFTY_GROSS = {0.20: 0.814396149, 0.50: 1, 1: 1.258774046}
         self.MEAN_COLOR_AMPLITUDE = mean_color_amplitude
@@ -19,22 +19,29 @@ class Constants:
         self.NOT_MONO_ITEMS = not_mono_items
         self.MONO_OR_NOT_MONO_ITEMS = mono_or_not_mono_items
         self.COINS = mono_items + not_mono_items + mono_or_not_mono_items
+        self.mean_h = mean_h
+        self.mean_s = mean_s
+        self.mean_v = mean_v
 
-        if self.MEAN_COINS_COLOR_DIFFS_PERCENTAGE < 0.13 and self.ALL_MONO_OR_NOT_MONO:
+        # TODO
+        if ((self.MEAN_COINS_COLOR_DIFFS_PERCENTAGE < 0.13) or (1.000000360856528e-17 > self.mean_v > 4.97429791576997e-18)) and self.ALL_MONO_OR_NOT_MONO:
             self.ALL_MONO = True
             self.ALL_NOT_MONO = False
             self.MONO_ITEMS = self.COINS
-        else:
+        elif self.ALL_MONO_OR_NOT_MONO:
             self.ALL_MONO = False
             self.ALL_NOT_MONO = True
             self.NOT_MONO_ITEMS = self.COINS
+        else:
+            self.ALL_MONO = False
+            self.ALL_NOT_MONO = False
 
         self.AREAS_MONO = [item.region.area for item in self.MONO_ITEMS]
         if self.AREAS_MONO:
             self.STD_AREAS_MONO = np.std(np.array(self.AREAS_MONO))
             self.MAX_AREA_MONO = max(self.AREAS_MONO)
 
-            if self.STD_AREAS_MONO < self.MAX_AREA_MONO / 12:
+            if (self.STD_AREAS_MONO < self.MAX_AREA_MONO / 12) or len(self.MONO_ITEMS) == 1:
                 # TODO: to znaczy, ze monety sa takie same. Byc moze trzeba dopracowac te liczbe
                 self.ALL_MONO_SAME = True
             else:
@@ -47,6 +54,6 @@ class Constants:
             self.MAX_AREA_NOT_MONO = max(self.AREAS_NOT_MONO)
             self.MIN_AREA_NOT_MONO = min(self.AREAS_NOT_MONO)
             self.MEAN_AREA_NOT_MONO = np.mean(np.array(self.AREAS_NOT_MONO))
-            if self.MEAN_AREA_NOT_MONO * 0.05 <= self.MAX_AREA_NOT_MONO - self.MIN_AREA_NOT_MONO <= self.MEAN_AREA_NOT_MONO * 0.06:
+            if (self.MEAN_AREA_NOT_MONO * 0.05 <= self.MAX_AREA_NOT_MONO - self.MIN_AREA_NOT_MONO <= self.MEAN_AREA_NOT_MONO * 0.06) or len(self.NOT_MONO_ITEMS) == 1:
                 # TODO: tutaj wszystkie monety sa takie same. Byc moze trzeba zmienic troche liczbe
                 self.ALL_NOT_MONO_SAME = True

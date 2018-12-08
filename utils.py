@@ -26,11 +26,14 @@ def is_coin(img):
 
 def check_monochromaticity(color_amplitude, mean_color_amplitude):
     if color_amplitude != 0 and mean_color_amplitude != 0 and color_amplitude <= mean_color_amplitude:
+        print("mono")
         return Type.MONOCHROMATIC_COIN
     else:
         if color_amplitude == 0 and mean_color_amplitude == 0:
+            print("all mono or not mono")
             return Type.ALL_MONO_OR_ALL_NOT_MONO
         else:
+            print("not mono")
             return Type.NOT_MONOCHROMATIC_COIN
 
 
@@ -77,7 +80,12 @@ def get_closest_key_from_ratio(ratio, item_ratio):
     for key in ratio:
         keys.append(key)
         diffs.append(abs(item_ratio - ratio[key]))
-    return keys[[i for i in range(len(diffs)) if diffs[i] == min(diffs)][0]]
+    chosen_indexes = [i for i in range(len(diffs)) if diffs[i] == min(diffs)]
+    chosen_keys = [keys[i] for i in chosen_indexes]
+    if len(chosen_keys) == 1:
+        return chosen_keys[0]
+    else:
+        return max(chosen_keys)
 
 
 def cut_img(img, min_x, max_x, min_y, max_y):
@@ -105,10 +113,9 @@ def add_alpha(rgb):
 
 
 def decide_if_two_or_five(item):
-    outer_part = get_outer_five_pln_circle(item)
-    outer_goldness = calculate_goldness(outer_part)
-
-    if outer_goldness > 0.5:
+    outer = get_five_pln_outer_circle(item)
+    outer_silverness = calculate_silverness(outer)
+    if outer_silverness < 0.2:
         return 2
     else:
         return 5
@@ -129,23 +136,21 @@ def draw_shape(img, coords):
     return img
 
 
-def draw_circle(img, circle, color=[0, 255, 0, 255]):
+def draw_circle(img, circle, color):
     rr, cc = circle
     img[rr, cc] = color
 
 
-# def get_outer_five_pln_circle(img, contour, centroid):
-def get_outer_five_pln_circle(item):
-    copy = np.copy(item.img)
+def get_five_pln_outer_circle(item):
+    outer = np.copy(item.img)
     centroid = item.region.centroid
     main_radius = item.contour.mean_distance
     radius = 0.7 * main_radius
     circle_contour = draw.circle(centroid[0], centroid[1], radius, shape=None)
-    draw_circle(copy, circle_contour, [0, 0, 0, 255])
-    return copy
+    draw_circle(outer, circle_contour, [0, 0, 0, 255])
+    return outer
 
 
-# def remove_border_from_circle(img, contour, centroid):
 def remove_border_from_circle(item):
     copy = np.copy(item.img)
     centroid = item.region.centroid
@@ -180,7 +185,25 @@ def calculate_goldness(img):
                 all_pixels += 1
                 if abs(pixel[0]-pixel[1]) + abs(pixel[1]-pixel[2]) > 25:
                     gold_pixels += 1
-    return gold_pixels/all_pixels
+    if all_pixels == 0:
+        return 0
+    else:
+        return gold_pixels/all_pixels
+
+
+def calculate_silverness(img):
+    silver_pixels = 0
+    all_pixels = 0
+    for element in img.tolist():
+        for pixel in element:
+            if pixel[0] != 0 and pixel[1] != 0 and pixel[2] != 0:
+                all_pixels += 1
+                if abs(pixel[0] - pixel[1]) + abs(pixel[1] - pixel[2]) <= 10:
+                    silver_pixels += 1
+    if all_pixels == 0:
+        return 0
+    else:
+        return silver_pixels / all_pixels
 
 
 def calculate_color_difference(img):

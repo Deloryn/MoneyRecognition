@@ -52,6 +52,9 @@ class ItemsManager:
         areas = []
         coins_color_diffs_percentages = []
         contour_objects = []
+        all_h = []
+        all_s = []
+        all_v = []
         for i, img in enumerate(items_imgs):
             if is_multishape(img):
                 print("jest multishape")
@@ -88,6 +91,10 @@ class ItemsManager:
                 circle = True
                 # img = remove_border_from_circle(img, contour, region.centroid)
                 if is_coin(img):
+                    hsv = color.rgb2hsv(img[:,:,:3])
+                    all_h.append(np.mean(hsv[:,:,0]))
+                    all_s.append(np.mean(hsv[:,:,1]))
+                    all_v.append(np.mean(hsv[:,:,2]))
                     coin = True
                     no_of_coins += 1
                     avg_red = np.mean(img[:, :, 0])
@@ -115,7 +122,7 @@ class ItemsManager:
             mean_color_amplitude = 0
 
         all_mono_or_not_mono = False
-        if parameter < 0.2:
+        if parameter < 0.175:
             mean_color_amplitude = 0
             color_amplitudes = [0] * len(color_amplitudes)
             all_mono_or_not_mono = True
@@ -143,11 +150,23 @@ class ItemsManager:
                         not_mono_items.append(item)
                     elif monochromaticity == Type.ALL_MONO_OR_ALL_NOT_MONO:
                         mono_or_not_mono_items.append(item)
+
+        if all_h and all_s and all_v:
+            mean_h = sum(all_h) / len(all_h)
+            mean_s = sum(all_s) / len(all_s)
+            mean_v = sum(all_v) / len(all_v)
+        else:
+            mean_h = 0
+            mean_s = 0
+            mean_v = 0
         ItemsManager.constants = Constants(areas,
                                            mean_color_amplitude,
                                            coins_color_diffs_percentages,
                                            all_mono_or_not_mono,
                                            mono_items,
                                            not_mono_items,
-                                           mono_or_not_mono_items)
+                                           mono_or_not_mono_items,
+                                           mean_h,
+                                           mean_s,
+                                           mean_v)
         return items
