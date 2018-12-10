@@ -151,6 +151,7 @@ def calculate_avg_hsv(props):
     props.avg_s = np.sum(hsv_img[:, :, 1]) / area
     props.avg_v = np.sum(hsv_img[:, :, 2]) / area
 
+
 def calculate_avg_rgb(props):
     area = props.bbox_area
     img = props.color_image

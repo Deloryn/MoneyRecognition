@@ -61,7 +61,6 @@ class ItemsManager:
                         new_region_props = self.__get_region_props_from_labels(labels, True, img)
                         region_props += new_region_props
 
-
         parameter = 0
         if no_of_coins > 0:
             color_amplitudes = np.array([props.amplitude for props in region_props if props.coin])
