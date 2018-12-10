@@ -1,6 +1,5 @@
 import numpy as np
 
-from utils import calculate_mean_middle_goldness
 
 class Constants:
     def __init__(self, areas, mean_color_amplitude, coins_color_diffs_percentages, all_mono_or_not_mono, mono_items, not_mono_items, mono_or_not_mono_items, mean_h, mean_s, mean_v):
@@ -42,7 +41,7 @@ class Constants:
             self.ALL_MONO = False
             self.ALL_NOT_MONO = False
 
-        self.AREAS_MONO = [item.region.area for item in self.MONO_ITEMS]
+        self.AREAS_MONO = [item.area for item in self.MONO_ITEMS]
         if self.AREAS_MONO:
             self.STD_AREAS_MONO = np.std(np.array(self.AREAS_MONO))
             self.MAX_AREA_MONO = max(self.AREAS_MONO)
@@ -54,7 +53,7 @@ class Constants:
                 self.MIN_AREA_MONO = max(self.AREAS_MONO)
                 self.RATIO_TEST_MONO = self.MIN_AREA_MONO / self.MAX_AREA_MONO
 
-        self.AREAS_NOT_MONO = [item.region.area for item in self.NOT_MONO_ITEMS]
+        self.AREAS_NOT_MONO = [item.area for item in self.NOT_MONO_ITEMS]
         if self.AREAS_NOT_MONO:
             self.STD_AREAS_NOT_MONO = np.std(np.array(self.AREAS_NOT_MONO))
             self.MAX_AREA_NOT_MONO = max(self.AREAS_NOT_MONO)

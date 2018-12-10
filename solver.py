@@ -1,9 +1,8 @@
 from os import path, mkdir
-
 from skimage import io
+import numpy as np
 
 from utils import get_closest_key_from_ratio, decide_if_two_or_five
-
 from items_manager import ItemsManager
 
 
@@ -11,7 +10,7 @@ class Solver:
     def __init__(self, origin_img_path, output_dir="output"):
         self.origin_img_name = origin_img_path.split("/")[-1]
         self.origin_img = io.imread(origin_img_path)
-        self.items_manager = ItemsManager(self.origin_img)
+        self.region_props = ItemsManager(self.origin_img).region_props
         self.output_dir = path.join(output_dir, self.origin_img_name)
         if not path.exists(output_dir):
             mkdir(output_dir)
@@ -23,8 +22,10 @@ class Solver:
         value_from_mono = self.solve_mono()
         total_value = value_from_mono + value_from_not_mono
 
-        for i, item in enumerate(self.items_manager.items):
-            item.save_img(self.output_dir, i)
+        for i, props in enumerate(self.region_props):
+            filename = str(i) + "-value-" + str(props.value) + ".png"
+            full_path = path.join(self.output_dir, filename)
+            io.imsave(full_path, props.color_image)
 
         return total_value
 
@@ -47,9 +48,9 @@ class Solver:
                     else:
                         ratio = {0.20: 0.740400216, 0.50: 0.909140076, 1: 1.14440238}
 
-                    item_areas = [item.region.area for item in ItemsManager.constants.MONO_ITEMS]
-                    mean_item_area = sum(item_areas) / len(item_areas)
-                    item_ratio = mean_item_area / max_not_mono_coin.region.area
+                    item_areas = [item.area for item in ItemsManager.constants.MONO_ITEMS]
+                    mean_item_area = np.mean(item_areas)
+                    item_ratio = mean_item_area / max_not_mono_coin.area
                     value = get_closest_key_from_ratio(ratio, item_ratio)
                     for item in ItemsManager.constants.MONO_ITEMS:
                         item.value = value
@@ -81,7 +82,7 @@ class Solver:
                     max_coin_val = 1
 
                 max_coin = [item for item in ItemsManager.constants.MONO_ITEMS if
-                            item.region.area == ItemsManager.constants.MAX_AREA_MONO][0]
+                            item.area == ItemsManager.constants.MAX_AREA_MONO][0]
                 max_coin.value = max_coin_val
                 if max_coin.value == 1:
                     ratio = ratio_for_one_pln
@@ -91,7 +92,7 @@ class Solver:
                     return 0
 
                 for item in ItemsManager.constants.MONO_ITEMS:
-                    item_ratio = item.region.area / max_coin.region.area
+                    item_ratio = item.area / max_coin.area
                     item.value = get_closest_key_from_ratio(ratio, item_ratio)
                     mono_value += item.value
 
@@ -113,7 +114,7 @@ class Solver:
                 not_mono_value += (final_decision * len(ItemsManager.constants.NOT_MONO_ITEMS))
             else:
                 for item in ItemsManager.constants.NOT_MONO_ITEMS:
-                    if item.region.area < ItemsManager.constants.MEAN_AREA_NOT_MONO:
+                    if item.area < ItemsManager.constants.MEAN_AREA_NOT_MONO:
                         item.value = 2
                     else:
                         item.value = 5
